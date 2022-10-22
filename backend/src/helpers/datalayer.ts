@@ -24,7 +24,8 @@ export function getTodos(userId: string): Promise<any>{
             TableName: tableName,
             KeyConditionExpression: "userId = :userId",
             ExpressionAttributeNames: {":userId": `${userId}`}
-        }).promise;
+        }).promise();
+        console.log(result, 'data')
         resolve(result);
     })
 }
