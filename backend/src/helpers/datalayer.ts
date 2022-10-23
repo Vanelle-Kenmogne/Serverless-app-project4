@@ -3,11 +3,17 @@
 // import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 // import { TodoItem } from '../models/TodoItem'
 // import { TodoUpdate } from '../models/TodoUpdate';
+
+import { createLogger } from '../utils/logger';
+import { v4 as uuid}  from 'uuid';
+import { TodoUpdate } from '../models/TodoUpdate';
+import { getUploadUrl } from './fileManagement';
 import {getDocumentClient} from "@shelf/aws-ddb-with-xray";
 
+const bucketName = process.env.ATTACHMENT_S3_BUCKET;
 const region = process.env.REGION;
 const tableName = process.env.TODOS_TABLE
-
+const logger = createLogger('TodosAccess');
 const DB = getDocumentClient({ //AWS XRAY TRACING
   ddbParams: {region: region, convertEmptyValues: true},
   ddbClientParams: {region: region},
@@ -28,4 +34,95 @@ export function getTodos(userId: string): Promise<any>{
         console.log(result, 'data')
         resolve(result);
     })
+}
+
+export async function createTodo(todo: {}, userId: string) {
+	try {
+		const todoId = uuid();
+				
+		const new_todo = {
+			todoId,
+			userId,
+			
+			done: false,
+			attachmentUrl: "",
+			...todo
+		}
+
+		await DB.put({
+			TableName: tableName,
+			Item: new_todo
+		}).promise();
+		
+		return new_todo;
+	} 
+	catch (error) {
+		logger.log('error', error);
+		return error;
+	}	
+}
+
+export async function deleteTodo(todoId: string, userId: string) {
+	try {
+		await DB.delete({
+			TableName: tableName,
+			Key: {
+				todoId,
+				userId
+			}
+		}).promise();
+		
+		return true;
+	} 
+	catch (error) {
+		logger.log('error', error);
+		return error;
+	}
+	
+}
+
+export async function updateTodo(todo: TodoUpdate, todoId: string, userId: string) {
+	try {
+		await DB.update({
+			TableName: tableName,
+			UpdateExpression: "set #name = :val, done = :done",
+			ExpressionAttributeValues: {":val": `${todo.name}`, ":done": `${todo.done}`},
+			ExpressionAttributeNames: {
+				"#name": "name"
+			},
+			Key: {
+				todoId,
+				userId
+			}
+		}).promise();
+		
+		return true;
+	} 
+	catch (error) {
+		logger.log('error', error);
+		return error;
+	}	
+}
+
+export async function generateUrl(todoId: string, userId: string) {
+	try {
+		const uploadUrl = getUploadUrl(todoId);
+		const imageUrl = `https://${bucketName}.s3.amazonaws.com/${todoId}`;
+
+		await DB.update({
+			TableName: tableName,
+			UpdateExpression: "set attachmentUrl = :url",
+			ExpressionAttributeValues: {":url": `${imageUrl}`},
+			Key: {
+				todoId,
+				userId
+			}
+		}).promise();
+		
+		return uploadUrl;
+	} 
+	catch (error) {
+		logger.log('error', error);
+		return error;
+	}
 }

@@ -28,7 +28,7 @@ provider:
         ATTACHMENT_S3_BUCKET: serverless-c4-todo-images-vanelle${self:provider.stage}
         SIGNED_URL_EXPIRATION: 300
         REGION: ${self:provider.region}
-
+        AUTH_0_SECRET: adE50jg_zNPvF3-7wsPH0N5QXASIsw6oVGas180D-yzll8qOjbtku7K-S4MGDg6e
     logs:
         # Enable API Gateway logs
         restApi: true
@@ -57,7 +57,7 @@ functions:
                 method: get
                 path: todos
                 cors: true
-                #   authorizer: Auth
+                authorizer: Auth
         iamRoleStatements:
             - Effect: Allow
               Action:
@@ -69,45 +69,77 @@ functions:
     # Provide iamRoleStatements property. Decide the Actions and AWS Resource. 
     # To refer to an AWS resource defined in the "Resources" section, you can use "Resource: !GetAtt <resource-name>.Arn"
     # To validate incoming HTTP requests, we have provided the request schemas in function definition below. 
-    #   CreateTodo:
-    #     handler: src/lambda/http/createTodo.handler
-    #     events:
-    #       - http:
-    #           method: post
-    #           path: todos
-    #           cors: true
-    #           authorizer: Auth
-    #           request:
-    #             schemas:
-    #               application/json: ${file(models/create-todo-model.json)}
-
+    CreateTodo:
+        handler: src/lambda/http/createTodo.handler
+        events:
+            - http:
+                method: post
+                path: todos
+                cors: true
+                authorizer: Auth
+                request:
+                    schemas:
+                    application/json: ${file(models/create-todo-model.json)}
+        iamRoleStatements:
+            - Effect: Allow
+              Action:
+                    - dynamodb:PutItem
+              Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+    
     # TODO: Configure this function
     # Provide property for setting up CORS, Authorizer, iamRoleStatements, and request schemas
-    #   UpdateTodo:
-    #     handler: src/lambda/http/updateTodo.handler
-    #     events:
-    #       - http:
-    #           method: patch
-    #           path: todos/{todoId}
-
+    UpdateTodo:
+        handler: src/lambda/http/updateTodo.handler
+        events:
+            - http:
+                method: patch
+                path: todos/{todoId}
+                cors: true
+                authorizer: Auth
+                request:
+                    schemas:
+                    application/json: ${file(models/update-todo-model.json)}
+        iamRoleStatements:
+            - Effect: Allow
+              Action:
+                    - dynamodb:UpdateItem
+              Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+              
     # TODO: Configure this function
     # Provide property for setting up CORS, Authorizer, iamRoleStatements
-    # DeleteTodo:
-    #     handler: src/lambda/http/deleteTodo.handler
-    #     events:
-    #     - http:
-    #         method: delete
-            # path: todos/{todoId}
-
+    DeleteTodo:
+        handler: src/lambda/http/deleteTodo.handler
+        events:
+            - http:
+                method: delete
+                path: todos/{todoId}
+                cors: true
+                authorizer: Auth
+        iamRoleStatements:
+            -   Effect: Allow
+                Action:
+                    - s3:DeleteObject
+                Resource: arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}
     # TODO: Configure this function
     # Provide property for setting up CORS, Authorizer, iamRoleStatements
-    # GenerateUploadUrl:
-    #     handler: src/lambda/http/generateUploadUrl.handler
-    #     events:
-    #     - http:
-    #         method: post
-    #         path: todos/{todoId}/attachment
-
+    GenerateUploadUrl:
+        handler: src/lambda/http/generateUploadUrl.handler
+        events:
+            - http:
+                method: post
+                path: todos/{todoId}/attachment
+                cors: true
+                authorizer: Auth
+        iamRoleStatements:
+            -   Effect: Allow
+                Action:
+                    - 's3:PutObject'
+                    - 's3:GetObject'
+                Resource: 'arn:aws:s3:::${self:provider.environment.ATTACHMENT_S3_BUCKET}/*'
+            -   Effect: Allow
+                Action:
+                    - dynamodb:UpdateItem
+                Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
 resources:
     Resources:
     
