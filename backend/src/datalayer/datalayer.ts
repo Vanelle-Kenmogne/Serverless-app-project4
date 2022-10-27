@@ -7,7 +7,7 @@
 import { createLogger } from '../utils/logger';
 import { v4 as uuid}  from 'uuid';
 import { TodoUpdate } from '../models/TodoUpdate';
-import { getUploadUrl } from './fileManagement';
+import { getUploadUrl } from '../fileManagement/fileManagement';
 import {getDocumentClient} from "@shelf/aws-ddb-with-xray";
 
 const bucketName = process.env.ATTACHMENT_S3_BUCKET;
