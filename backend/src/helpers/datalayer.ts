@@ -25,14 +25,19 @@ const DB = getDocumentClient({ //AWS XRAY TRACING
 // TODO: Implement the dataLayer logic
 
 export function getTodos(userId: string): Promise<any>{
-    return new Promise(async(resolve) => {
-        const result = await DB.query({
-            TableName: tableName,
-            KeyConditionExpression: "userId = :userId",
-            ExpressionAttributeNames: {":userId": `${userId}`}
-        }).promise();
-        console.log(result, 'data')
-        resolve(result);
+    return new Promise(async(resolve, reject) => {
+		try {
+			const result = await DB.query({
+				TableName: tableName,
+				KeyConditionExpression: "userId = :userId",
+				ExpressionAttributeValues: {":userId": `${userId}`}
+			}).promise();
+			console.log(result)
+			resolve(result);
+		} catch (error) {
+			reject(error)
+		}
+        
     })
 }
 

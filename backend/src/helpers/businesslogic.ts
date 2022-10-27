@@ -16,7 +16,7 @@ export function getTodosForUser(userId:string) {
     return new Promise(async(resolve, reject) => {
         try {
             const todos = await getTodos(userId);
-            resolve(todos.data.items)
+            resolve(todos)
         } catch (error) {
             reject(error)
         }
@@ -27,7 +27,7 @@ export function createUserTodo(newTodo: CreateTodoRequest, userId: string): Prom
 	return new Promise(async (resolve, reject) => {
 		try {
             const todo = await createTodo(newTodo, userId);
-            resolve(todo.data)
+            resolve(todo)
           } catch (error) {
             reject(error)
           }
@@ -39,7 +39,7 @@ export function deleteUserTodo(todoId: string, userId: string):Promise <{}> {
 		try {
             const todo = await deleteTodo(todoId, userId);
             deleteBucket(todoId);
-            resolve(todo.data)
+            resolve(todo)
           } catch (error) {
             reject(error)
           }
@@ -50,7 +50,7 @@ export function updateUserTodo(updatedTodo: UpdateTodoRequest, todoId: string, u
 	return new Promise(async (resolve, reject) => {
 		try {
             const todo = await updateTodo(updatedTodo, todoId, userId);
-            resolve(todo.data)
+            resolve(todo)
           } catch (error) {
             reject(error)
           }
@@ -61,7 +61,7 @@ export function createAttachmentPresignedUrl(todoId: string, userId: string):Pro
 	return new Promise(async (resolve, reject) => {
 		try {
             const todo = await generateUrl(todoId, userId);
-            resolve(todo.data)
+            resolve(todo)
           } catch (error) {
             reject(error)
           }
